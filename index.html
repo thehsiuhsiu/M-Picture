@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <title>M-Picture</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' 
+    viewBox='0 0 100 100'><text x='50%' y='75%' dominant-baseline='middle' text-anchor='middle' 
+    font-size='90' fill='currentColor'>𖡼</text></svg>" type="image/svg+xml">
+    <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0/build/index.js"></script> <!-- 建立Word .docx檔案模組 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script> <!-- 轉換HEIC to jpg模組 -->
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <h1> M-Picture®</h1>
+        <div class="header-controls">
+            <div class="toggle-container">
+                <div class="labels">
+                    <span class="label" data-value="left"> 刑事案件</span>
+                    <span class="label" data-value="middle">交通事故</span>
+                    <span class="label" data-value="right">交通違規</span>
+                </div>
+            </div>
+
+        </div>
+        <button id="generate" class="create-btn create-btn-disabled tooltip-bottom">
+            <i class="fas fa-download"></i>
+            <span class="tooltip-text">下載文件</span>
+        </button>
+    </header>
+
+    <div class="container">
+        <div id="imagePreview">
+            <div class="empty-state">
+                <h4>🔍 點擊下方 " + " 按鈕開始新增照片。</h4>
+                <p>說明：新增照片後，可拖移照片編號變更順序。</p>
+                <p>⛔ 圖片僅支援JPG、PNG等格式，HEIC格式將轉檔後編輯。</p>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="add-photo-container">
+        <label for="imageInput" class="add-photo-btn">
+            <span class="plus-icon">+</span>
+        </label>
+        <input type="file" id="imageInput" multiple accept="image/*,.heic,.HEIC">
+    </div>
+
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <p>🖨️ 照片黏貼中，請稍候...</p>
+        </div>
+    </div>
+
+    <div id="conversionModal" class="modal">
+        <div class="modal-content">
+            <p>🍵 轉換.heic檔案，請稍候...</p>
+        </div>
+    </div>
+
+    <div class="footer-container">
+        <p>提醒：照片不一定會貼成功，可能會突然沒有膠水...</p>
+        <p>🚧 Copyright© 2024 thehsiuhsiu. All rights reserved.🚧</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

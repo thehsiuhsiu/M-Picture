@@ -1,0 +1,520 @@
+body {
+    font-family: 'Noto Sans TC', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8fafc;
+    color: #333;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 45px;
+    z-index: 999;
+
+    background-color: #f8fafc;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 2px #dddddd;
+
+    /* 添加這行來防止內容換行 */
+    flex-wrap: nowrap;
+}
+
+h1 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2f2f2f;
+    margin: 0;
+
+    /* 添加以下屬性來阻止文字選取 */
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Old Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
+    user-select: none;
+    /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: nowrap;
+    /* 將其改為 nowrap 或移除 */
+    flex-shrink: 0;
+    /* 防止它在空間不足時縮小 */
+}
+
+.toggle-container {
+    /*toggle大容器*/
+    display: flex;
+    background-color: #edf2fa;
+    border-radius: 30px;
+    position: relative;
+    width: 300px;
+    height: 40px;
+    overflow: hidden;
+    margin-left: -70px;
+    flex-shrink: 0;
+    /*padding: 2px; /* 添加內邊距 */
+    box-sizing: border-box;
+    /* 確保padding不會增加總寬度 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    /* 添加陰影 */
+  
+}
+
+.labels {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    width: 100%;
+    height: 100%;
+
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    box-sizing: border-box;
+    color: #555;
+    font-weight: bold;
+    /*text-shadow: 1px 1px 1px rgba(255,255,255,0.5);*/
+}
+
+.label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.3s, text-shadow 0.3s;
+    font-size: 18px;
+    color: #a5a5a5;
+    /*font-weight: bold;*/
+    z-index: 1;
+    user-select: none;
+}
+
+.label.active {
+    color: #ffffff;
+    /*text-shadow: 0 0 5px rgba(255,255,255,0.5);*/
+}
+
+.toggle-container::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 98px;
+    height: 36px;
+    background-color: #3d87e9;
+    border-radius: 28px;
+    transition: transform 0.3s ease;
+
+    /*box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 添加內部陰影 */
+}
+
+.toggle-container[data-state="left"]::before {
+    transform: translateX(0);
+}
+
+.toggle-container[data-state="middle"]::before {
+    transform: translateX(99px);
+}
+
+.toggle-container[data-state="right"]::before {
+    transform: translateX(198px);
+}
+
+.container {
+    /*顯示相片區域*/
+
+    /*max-width: 1200px;*/
+    margin: 80px 80px 45px;
+    padding: 10px;
+    background: #edf2fa;
+    border-radius: 20px;
+    min-height: calc(100vh - 180px);
+    box-shadow: 0 3px 5px rgba(29, 29, 29, 0.2);
+    /* 添加陰影 */
+}
+
+#imagePreview {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    color: #afafaf;
+    font-size: 13px;
+    line-height: 18px;/*行高*/
+    position: static;
+    text-align: center;
+
+}
+
+#imagePreview img {
+    max-width: 200px;
+    max-height: 200px;
+    margin: 10px;
+    border: 2px solid #ddd;
+    border-radius: 15px;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    /* 添加陰影 */
+}
+
+#imagePreview img:hover {
+    transform: scale(1.05);
+}
+
+.add-photo-container {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+.add-photo-btn {
+    width: 50px;  /* 圓形按鈕的寬度 */
+    height: 50px; /* 圓形按鈕的高度，必須與寬度相同 */
+    border-radius: 50%; /* 圓角設定：讓正方形變成圓形 */
+    background-color: #3d87e9;  /* 背景與邊框 */
+    border: none;
+    outline: none; /* 移除點擊時的藍色外框 */
+    color: #ffffff; /* 文字樣式 */
+    font-size: 50px; /* 控制加號的大小 */
+    font-weight: bold;
+    line-height: 1; /* 重置行高，讓 flexbox 完全控制垂直對齊 */
+    display: flex;/* 文字置中：使用 Flexbox */
+    justify-content: center; /* 水平置中 */
+    align-items: center; /* 垂直置中 */
+    /*transform: translate(5px, -20px); /* 範例：向左移 1px，向上移 2px */
+    cursor: pointer; /* 顯示手形游標 */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* 平滑過渡效果 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 陰影效果 */
+    text-decoration: none; /* 如果 label 元素有預設的下劃線，移除它 */
+}
+.plus-icon {
+    /* 這個 span 負責包裹加號並進行微調 */
+    display: block; /* 確保 transform 能有效作用 */
+    /* 核心！在這裡調整加號的最終位置 */
+    /* 負值向左/向上，正值向右/向下 */
+    transform: translate(0.5px, -2px); /* 再次嘗試微調這些值 */
+}
+
+
+
+#imageInput {
+    display: none;
+}
+
+.create-btn {
+    /*"下載"按鈕容器*/
+    position: relative;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+    height: 40px;
+    width: 60px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+    /* 添加 box-shadow 過渡 */
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* 添加陰影 */
+}
+
+.create-btn-disabled {
+    /*未未觸發"下載"按鈕顯示效果*/
+    background-color: #e7edf4;
+    color: #a6a6a6;
+}
+
+.create-btn-enabled {
+    /*觸發"下載"按鈕顯示效果*/
+    background-color: #ffc800;
+    color: #fafcff;
+}
+
+.create-btn-enabled:hover {
+    /*滑鼠靠近"下載"按鈕顯示效果*/
+    background-color: #ffc800;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    /* 改變陰影效果 */
+}
+
+/* 提示文字的預設樣式：隱藏 */
+.tooltip-text {
+    visibility: hidden;
+    width: 80px;
+    background-color: #8a8a8a;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s;
+    /* 移除預設的 bottom/left/margin-left，由下面的特定方向類別設定 */
+}
+
+
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    border-width: 5px;
+    border-style: solid;
+    /* 箭頭的顏色和方向也由下面的特定方向類別設定 */
+}
+
+
+/* 新增：下方顯示 */
+.create-btn.tooltip-bottom .tooltip-text {
+    top: 125%; /* 改為距離按鈕頂部 125% */
+    left: 50%;
+    margin-left: -40px;
+}
+.create-btn.tooltip-bottom .tooltip-text::after {
+    bottom: 100%; /* 箭頭在上方 */
+    left: 50%;
+    margin-left: -5px;
+    border-color: transparent transparent #8a8a8a transparent; /* 箭頭朝上 */
+}
+/* 當滑鼠移到 .my-button 上時，顯示 .tooltip-text */
+.create-btn:hover .tooltip-text {
+    visibility: visible; /* 顯示提示框 */
+    opacity: 1; /* 完全顯示 */
+}
+
+
+
+
+
+
+
+
+.image-container {
+    /*選取預覽圖片虛線*/
+    position: relative;
+    display: inline-block;
+    margin: 10px;
+    cursor: move;
+    border-radius: 20px;
+
+}
+
+.drag-over {
+    border: 2px dashed #000;
+}
+
+.image-container img {
+    max-width: 200px;
+    max-height: 200px;
+    border: 2px solid #ddd;
+    border-radius: 20px;
+    transition: transform 0.2s;
+}
+
+.image-container img:hover {
+    transform: scale(1.05);
+}
+
+.image-counter {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background-color: rgb(211, 217, 233);
+    color: rgb(66, 66, 66);
+    border-radius: 100%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+
+}
+
+.delete-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(255, 0, 0, 0.3);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* 添加陰影 */
+}
+
+.delete-button:hover {
+    background-color: rgba(255, 0, 0, 0.8);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px;
+    text-align: center;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* 添加陰影 */
+}
+
+.modal-content p {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+/*
+@media (max-width: 1024px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-controls {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+}*/
+
+@media (max-width: 768px) {
+    header {
+        /* 將 header 設為垂直方向的 flex 容器 */
+        flex-direction: column;
+        /* 將項目垂直堆疊 */
+        height: auto;
+        /* 高度自適應內容 */
+        padding: 10px;
+        /* 調整內邊距 */
+        align-items: center;
+        /* 主軸（現在是垂直軸）上的居中 */
+        justify-content: center;
+        /* 次軸（現在是水平軸）上的居中 */
+    }
+
+    h1 {
+        /* 標題居中 */
+        text-align: center;
+        margin-bottom: 10px;
+        /* 在標題下方增加一些間距 */
+        font-size: 24px;
+        /* 縮小標題字體 */
+    }
+
+    .header-controls {
+        /* 讓 header-controls 佔滿寬度，並確保其內部元素居中 */
+        width: 100%;
+        /* 佔滿可用寬度 */
+        justify-content: center;
+        /* 內部元素水平居中 */
+        flex-wrap: wrap;
+        /* 允許內部元素換行，如果空間不足 */
+        margin-bottom: 10px;
+        /* 在其下方增加間距 */
+        gap: 10px;
+        /* 縮小間距 */
+    }
+
+    .toggle-container {
+        /* 讓 toggle-container 能夠更彈性地適應小螢幕 */
+        width: 100%;
+        /* 佔滿 header-controls 的寬度 */
+        max-width: 300px;
+        /* 但不要太大 */
+        /* 你也可以考慮在這裡讓 width: auto; 並依賴 flex-basis */
+        flex-basis: auto;
+        /* 讓它根據內容大小調整基礎寬度 */
+    }
+
+    .container {
+        /*顯示相片區域*/
+
+        /*max-width: 1200px;*/
+        margin: 180px 30px 20px;
+        padding: 10px;
+        background: #e7edf4;
+        border-radius: 20px;
+        min-height: calc(100vh - 180px);
+        box-shadow: 0 4px 8px rgba(29, 29, 29, 0.2);
+        /* 添加陰影 */
+    }
+
+
+    .create-btn {
+        /* 下載按鈕也居中並調整樣式 */
+        margin-top: 5px;
+        /* 在上方增加間距 */
+        padding: 8px 15px;
+        /* 調整內邊距 */
+        font-size: 14px;
+        /* 縮小按鈕字體 */
+        width: 80%;
+        /* 讓按鈕佔用一定寬度 */
+        max-width: 60px;
+        /* 但有最大寬度限制 */
+    }
+}
+
+.footer-container,footer {
+    
+    text-align: center;
+    /*padding: 15px;*/
+    /*background-color: #f0f0f0; /* 輕微的背景色，可選 */
+    /*color: #555;*/
+    font-size: 12px;
+    line-height: 5px;/*行高*/
+    position: static;
+    
+    /* 固定在底部 */
+    /*bottom: 0;*/
+   /* left: 0;*/
+    /*width: 100%;*/
+   
+}
