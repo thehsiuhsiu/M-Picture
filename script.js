@@ -310,9 +310,9 @@
             const emptyStateDiv = document.createElement('div');
             emptyStateDiv.className = 'empty-state';
             emptyStateDiv.innerHTML = `
-            <h3>尚未選擇照片</h3>
-            <p>點擊下方按鈕開始新增照片</p>
-        `;
+            <h4>🔍 點擊下方 " + " 按鈕開始新增照片。</h4>
+            <p>說明：新增照片後，可拖移照片編號變更順序。</p>
+            <p>⛔ 圖片僅支援JPG、PNG等格式，HEIC格式將轉檔後編輯。</p>`;
             imagePreview.appendChild(emptyStateDiv);
             console.log("No images left, displaying empty state.");
         }
