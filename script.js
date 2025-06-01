@@ -361,7 +361,7 @@
 
     const handleGenerate = () => {
         if (state.selectedImages.length === 0) {
-            alert('請選擇至少一張圖片。');
+            alert('🔍請先點擊下方"+"按鈕開始新增照片。');
             return;
         }
 
