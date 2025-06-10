@@ -1,6 +1,4 @@
-// 使用立即調用的函數表達式 (IIFE) 來避免全局變量污染
 (function () {
-    // 狀態管理
     const state = {
         selectedImages: [],
         imageCounter: 0,
@@ -9,19 +7,7 @@
         selectedFormat: 'left' // 默認選擇刑事案件格式
     };
 
-    // 工具函數
-    const debounce = (func, wait) => {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func(...args), wait);
-        };
-    };
-
-    // 初始化函數
     const init = () => {
-        const imagePreview = document.getElementById('imagePreview');
-
         if (state.isInitialized) return;
         state.isInitialized = true;
 
@@ -36,17 +22,10 @@
             return;
         }
 
-        // 重置事件監聽器
-        Object.entries(elements).forEach(([key, element]) => {
-            element.removeEventListener('change', handleImageSelection);
-            element.removeEventListener('click', handleGenerateWrapper);
-        });
-
         elements.imageInput.addEventListener('change', handleImageSelection);
         elements.generateButton.addEventListener('click', handleGenerateWrapper);
-
         elements.generateButton.onclick = null;
-
+        elements.generateButton.addEventListener('click', handleGenerateWrapper);
         // 添加 toggle switch 的事件監聽
         const toggleContainer = document.querySelector('.toggle-container');
         const labels = toggleContainer.querySelectorAll('.label');
@@ -59,10 +38,7 @@
         });
 
         updateToggleState(state.selectedFormat);
-
-        addStyles();
         updateCreateButtonState();
-
         console.log('圖片管理腳本初始化完成');
     };
 
@@ -81,6 +57,7 @@
     // 圖片選擇和處理
     const handleImageSelection = (event) => {
         const files = Array.from(event.target.files);
+        showUploadingModal();//上傳中請稍後
         processFiles(files);
         event.target.value = '';
     };
@@ -93,8 +70,7 @@
                 file.name.toLowerCase().endsWith('.heic') ||
                 file.name.toLowerCase().endsWith('.heif');
 
-            if (isHEIC) {
-                // 轉換 HEIC 檔案
+            if (isHEIC) {// 轉換 HEIC 檔案
                 showConversionModal()
                 heic2any({
                     blob: file,
@@ -126,10 +102,8 @@
                     alert(`HEIC 檔案 "${file.name}" 轉換失敗，請嘗試其他格式的圖片。`);
                     reject(error);
                 });
-            } else {
-                // 處理一般圖片檔案
-
-
+            }
+            else {// 處理一般圖片檔案
                 const reader = new FileReader();
                 reader.onload = e => {
                     const img = new Image();
@@ -154,9 +128,12 @@
             .then(imageDataArray => {
                 console.log("Image data processed:", imageDataArray.length);
                 imageDataArray.forEach(handleImageAddition);
+                hideUploadingModal();
+
             })
             .catch(error => {
                 hideConversionModal()
+                hideUploadingModal();
                 console.error('Error processing images:', error);
                 alert('處理圖片時發生錯誤，請重試。');
             });
@@ -169,7 +146,7 @@
         }
         if (isDuplicateImage(imageData)) {
             console.log("Duplicate found:", imageData.name);
-            if (confirm(`檔案 "${imageData.name}" 已經存在。你確定要再次新增嗎？`)) {
+            if (confirm(`檔案 "${imageData.name}" 已經存在。是否重複新增？`)) {
                 addImageToCollection(imageData);
             } else {
                 console.log("User chose not to add duplicate image");
@@ -192,6 +169,7 @@
         state.selectedImages.push(imageData);
         addImageToPreview(imageData, state.selectedImages.length);
         updateCreateButtonState();
+        updateDownloadZipButtonState(); // ← 新增這行
         console.log("Image added to collection:", imageData.name);
         console.log("Total images in collection:", state.selectedImages.length);
     };
@@ -213,6 +191,7 @@
         counterElement.textContent = counter;
         imageContainer.appendChild(counterElement);
 
+
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-button';
         deleteButton.textContent = '×';
@@ -223,11 +202,10 @@
         console.log("Image preview added:", imageData.name);
     };
 
-    // 拖放功能
+    // 拖曳變更順序func
     const handleImageContainerEvents = (e) => {
         const container = e.target.closest('.image-container');
         if (!container) return;
-
         switch (e.type) {
             case 'dragstart':
                 e.dataTransfer.setData('text/plain', container.dataset.id);
@@ -251,6 +229,7 @@
                 container.style.opacity = '';
                 break;
         }
+
     };
 
     const handleImageDrop = (draggedId, dropZone) => {
@@ -291,6 +270,7 @@
         console.log("Total images after reorder:", state.selectedImages.length);
 
         updateCreateButtonState();
+        updateDownloadZipButtonState(); // ← 新增這行
     };
 
     const removeImage = (id) => {
@@ -302,6 +282,7 @@
         }
         updateImageCounters();
         updateCreateButtonState();
+        updateDownloadZipButtonState(); // ← 新增這行
         console.log("Image removed. Remaining images:", state.selectedImages.length);
 
         // Add this block to check if no images are left and re-display the empty state
@@ -330,15 +311,11 @@
         console.log("Image counters updated. New count:", state.imageCounter);
     };
 
-
-
-    //============================================================================================================================================================
     //============================================================================================================================================================
 
-
-
+    //============================================================================================================================================================
     // 文檔生成
-    const handleGenerateWrapper = (event) => {
+    const handleGenerateWrapper = async (event) => {
         event.preventDefault();
         event.stopPropagation();
 
@@ -351,7 +328,7 @@
         state.isGenerating = true;
 
         try {
-            handleGenerate();
+            await handleGenerate(); // ← 加 await
         } finally {
             setTimeout(() => {
                 state.isGenerating = false;
@@ -359,22 +336,36 @@
         }
     };
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         if (state.selectedImages.length === 0) {
-            alert('🔍請先點擊下方"+"按鈕開始新增照片。');
+            alert('請選擇至少一張圖片。');
             return;
         }
-
-        console.log("Generating document with", state.selectedImages.length, "images");
-        console.log("Selected format:", state.selectedFormat);
         showLoadingModal();
 
-        try {
-            const docx = window.docx;
-            const doc = createDocument(docx, state.selectedFormat);
+        // 用 setTimeout 讓 modal 先顯示
+        setTimeout(async () => {
+            try {
+                const docx = window.docx;
+                const caseReason = document.getElementById('zipPrefix').value;
+                const caseUnit = document.getElementById('caseUni').value;
+                const caseAddress = document.getElementById('caseAddress').value;
+                const caseDate = document.getElementById('caseDate').value;
+                const caseNumber = document.getElementById('caseNumber').value;
 
-            docx.Packer.toBlob(doc).then(blob => {
+                const doc = createDocument(docx, state.selectedFormat, {
+                    caseReason,
+                    caseUnit,
+                    caseAddress,
+                    caseDate,
+                    caseNumber
+                });
+
+                // 用 await 等待產生 blob
+                const blob = await docx.Packer.toBlob(doc);
+
                 hideLoadingModal();
+
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 const dateString = getFormattedDate();
@@ -385,20 +376,17 @@
                 };
                 link.download = `${formatNames[state.selectedFormat]}照片黏貼表_${dateString}.docx`;
                 link.click();
-            }).catch(error => {
+
+            } catch (error) {
                 hideLoadingModal();
-                console.error('Error creating document:', error);
-                alert('文件生成時出錯，請查看控制台以獲取詳細信息。');
-            });
-        } catch (error) {
-            hideLoadingModal();
-            console.error('Error in document generation:', error);
-            alert('文件生成過程中出錯，請查看控制台以獲取詳細信息。');
-        }
+                console.error('Error in document generation:', error);
+                alert('文件生成過程中出錯，請查看控制台以獲取詳細信息。');
+            }
+        }, 0);
     };
 
     // 主要的文檔創建函數
-    const createDocument = (docx, format) => {
+    const createDocument = (docx, format, formData) => {
         let title, createContent;
         switch (format) {
             case 'left':
@@ -416,16 +404,6 @@
             default:
                 throw new Error("未知的文檔格式");
         }
-        const compatibilityNote = new docx.Paragraph({
-            children: [
-                new docx.TextRun({
-                    text: "注意：此文件為 .docx 格式。如需在 Word 2003 中開啟，請使用較新版本的 Word 打開後，選擇「另存新檔」並選擇「Word 97-2003 文件 (*.doc)」格式保存。",
-                    size: 20,
-                    color: "FF0000",  // 紅色
-                    bold: true
-                })
-            ]
-        });
 
         const sections = [{
             properties: {
@@ -459,7 +437,7 @@
                     ],
                 }),
             },
-            children: createContent(docx, state.selectedImages),
+            children: createContent(docx, state.selectedImages, formData),
         }];
 
         // 只為非交通違規文件添加頁腳
@@ -483,18 +461,18 @@
 
     //====================================刑事案件=========================================================================================
     // 刑案照片內容（保持原有格式）
-    const createCriminalContent = (docx, images) => {
-        return createImageTables(docx, images);
+    const createCriminalContent = (docx, images, formData) => {
+        return createImageTables(docx, images, formData);
     };
 
     //刑案照片內容 
-    const createImageTables = (docx, images) => {
+    const createImageTables = (docx, images, formData) => {
         const tables = [];
         for (let i = 0; i < images.length; i += 2) {
-            tables.push(createHeaderTable(docx));
-            tables.push(...createImageTable(docx, images[i], i + 1));
+            tables.push(createHeaderTable(docx, formData));
+            tables.push(...createImageTable(docx, images[i], i + 1, formData));
             if (i + 1 < images.length) {
-                tables.push(...createImageTable(docx, images[i + 1], i + 2));
+                tables.push(...createImageTable(docx, images[i + 1], i + 2, formData));
             }
             if (i + 2 < images.length) {
                 tables.push(new docx.Paragraph({
@@ -506,7 +484,7 @@
     };
 
     //刑案照片內容 案由 單位
-    const createHeaderTable = (docx) => {
+    const createHeaderTable = (docx, formData) => {
         return new docx.Table({
             width: {
                 size: 100,
@@ -521,7 +499,7 @@
                         }),
                         new docx.TableCell({
                             children: [new docx.Paragraph({
-                                text: "Z",
+                                text: formData.caseReason || "",
                                 style: "Normal",
                                 alignment: docx.AlignmentType.CENTER
                             })],
@@ -534,7 +512,7 @@
                         }),
                         new docx.TableCell({
                             children: [new docx.Paragraph({
-                                text: "U",
+                                text: formData.caseUnit || "",
                                 style: "Normal",
                                 alignment: docx.AlignmentType.CENTER
                             })],
@@ -548,7 +526,7 @@
     };
 
     //刑案照片內容
-    const createImageTable = (docx, image, index) => {
+    const createImageTable = (docx, image, index, formData) => {
 
         const imageRatio = image.width / image.height;
         let imageHeight = 350;  // 固定高度為350
@@ -604,7 +582,7 @@
                                 width: { size: 15, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
-                                children: [new docx.Paragraph({ text: "D", style: "Normal", alignment: docx.AlignmentType.LEFT })],
+                                children: [new docx.Paragraph({ text: formData.caseDate || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
                                 width: { size: 35, type: docx.WidthType.PERCENTAGE },
                                 columnSpan: 2,
                             }),
@@ -613,7 +591,7 @@
                                 width: { size: 15, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
-                                children: [new docx.Paragraph({ text: "P", style: "Normal", alignment: docx.AlignmentType.CENTER })],
+                                children: [new docx.Paragraph({ text: formData.caseNumber || "", style: "Normal", alignment: docx.AlignmentType.CENTER })],
                                 width: { size: 20, type: docx.WidthType.PERCENTAGE },
                             }),
                         ],
@@ -625,7 +603,7 @@
                                 width: { size: 15, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
-                                children: [new docx.Paragraph({ text: "R", style: "Normal", alignment: docx.AlignmentType.LEFT })],
+                                children: [new docx.Paragraph({ text: formData.caseAddress || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
                                 columnSpan: 5,
                                 width: { size: 85, type: docx.WidthType.PERCENTAGE },
                             }),
@@ -656,11 +634,11 @@
     //====================================交通事故=========================================================================================
 
     // 交通事故照片內容
-    const createTrafficAccidentContent = (docx, images) => {
+    const createTrafficAccidentContent = (docx, images, formData) => {
         const tables = [];
         for (let i = 0; i < images.length; i++) {
             // 添加圖片表格
-            tables.push(createTrafficAccidentImageTable(docx, images[i], i + 1));
+            tables.push(createTrafficAccidentImageTable(docx, images[i], i + 1, formData));
 
             // 在每個表格後添加一個空白段落，除非是最後一個表格
             if (i < images.length - 1) {
@@ -676,7 +654,7 @@
     };
 
     // 交通事故圖片表格
-    const createTrafficAccidentImageTable = (docx, image, index) => {
+    const createTrafficAccidentImageTable = (docx, image, index, formData) => {
         const imageRatio = image.width / image.height;
         let imageHeight = 350;  // 固定高度為350
         let imageWidth = imageHeight * imageRatio; //寬度=高度*比例
@@ -725,7 +703,7 @@
                             width: { size: 15, type: docx.WidthType.PERCENTAGE },
                         }),
                         new docx.TableCell({
-                            children: [new docx.Paragraph({ text: "D", style: "Normal" })],
+                            children: [new docx.Paragraph({ text: formData.caseDate || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
                             width: { size: 55, type: docx.WidthType.PERCENTAGE },
                             columnSpan: 2,
                         }),
@@ -764,19 +742,19 @@
     //====================================交通違規=========================================================================================
 
     // 交通違規照片內容
-    const createTrafficViolationContent = (docx, images) => {
+    const createTrafficViolationContent = (docx, images, formData) => {
         const tables = [];
         for (let i = 0; i < images.length; i += 2) {
             // 添加圖片表格
             tables.push(createTrafficViolationHeaderTable(docx));
-            tables.push(...createTrafficViolationImageTable(docx, images[i], i + 1));
+            tables.push(...createTrafficViolationImageTable(docx, images[i], i + 1, formData));
 
             /*// 在每個表格後添加一個空白段落，除非是最後一個表格
             if (i < images.length - 1) {
                 tables.push(new docx.Paragraph({ text: "", style: "Normal" }));
             }*/
             if (i + 1 < images.length) {
-                tables.push(...createTrafficViolationImageTable(docx, images[i + 1], i + 2));
+                tables.push(...createTrafficViolationImageTable(docx, images[i + 1], i + 2, formData));
             }
 
             // 每兩張圖片後添加一個分頁符，除非是最後一組
@@ -788,7 +766,7 @@
     };
 
     // 交通違規表頭表格
-    const createTrafficViolationHeaderTable = (docx) => {
+    const createTrafficViolationHeaderTable = (docx, formData) => {
         return new docx.Table({
             width: {
                 size: 100,
@@ -833,7 +811,7 @@
     };
 
     // 交通違規圖片表格
-    const createTrafficViolationImageTable = (docx, image, index) => {
+    const createTrafficViolationImageTable = (docx, image, index, formData) => {
         const imageRatio = image.width / image.height;
         let imageHeight = 350;  // 固定高度為350
         let imageWidth = imageHeight * imageRatio; //寬度=高度*比例
@@ -884,7 +862,7 @@
                                 width: { size: 15, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
-                                children: [new docx.Paragraph({ text: "年月日時分", style: "Normal", alignment: docx.AlignmentType.LEFT })],
+                                children: [new docx.Paragraph({ text: formData.caseDate || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
                                 width: { size: 35, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
@@ -892,7 +870,7 @@
                                 width: { size: 15, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
-                                children: [new docx.Paragraph({ text: "R", style: "Normal", alignment: docx.AlignmentType.LEFT })],
+                                children: [new docx.Paragraph({ text: formData.caseAddress || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
                                 width: { size: 35, type: docx.WidthType.PERCENTAGE },
                             }),
                         ],
@@ -933,7 +911,7 @@
                                 width: { size: 15, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
-                                children: [new docx.Paragraph({ text: "P", style: "Normal", alignment: docx.AlignmentType.LEFT })],
+                                children: [new docx.Paragraph({ text: formData.caseNumber || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
                                 width: { size: 35, type: docx.WidthType.PERCENTAGE },
                             }),
                         ],
@@ -952,26 +930,7 @@
     };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //======================================================================================================================================================
-    //=======================================================================================================================================================
-
-
     //================================================================================================================================================
-    // 輔助函數
     const createDefaultFooter = (docx) => {
         return new docx.Footer({
             children: [new docx.Paragraph({
@@ -1026,11 +985,10 @@
                         font: "DFKai-SB",
                     },
                 },
-                // 其他樣式...
             ],
         };
     };
-    // 輔助函數
+
     const updateCreateButtonState = () => {
         const createButton = document.getElementById('generate');
         if (!createButton) {
@@ -1046,57 +1004,23 @@
         console.log("Selected images count:", state.selectedImages.length);
     };
 
-    const addStyles = () => {
-        const style = document.createElement('style');
-        style.textContent = `
-        #imagePreview {
-            display: flex;
-            flex-wrap: wrap;
+    let uploadingModalShowTime = 0;
+
+    const showUploadingModal = () => {
+        document.getElementById('uploadingModal').style.display = 'block';
+        uploadingModalShowTime = Date.now();
+    };
+
+    const hideUploadingModal = () => {
+        const elapsed = Date.now() - uploadingModalShowTime;
+        const minDuration = 500; // 至少顯示0.4秒
+        if (elapsed < minDuration) {
+            setTimeout(() => {
+                document.getElementById('uploadingModal').style.display = 'none';
+            }, minDuration - elapsed);
+        } else {
+            document.getElementById('uploadingModal').style.display = 'none';
         }
-        .image-container {
-            cursor: move;
-            margin: 5px;
-            position: relative;
-            display: inline-block;
-        }
-        .drag-over {
-            border: 2px dashed #000;
-        }
-        .image-container img {
-            max-width: 200px;
-            max-height: 200px;
-            border: 2px solid #ddd;
-            border-radius: 15px;
-            transition: transform 0.2s;
-        }
-        .image-container img:hover {
-            transform: scale(1.05);
-        }
-        .delete-button {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: rgba(255, 0, 0, 0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            line-height: 20px;
-            text-align: center;
-            cursor: pointer;
-        }
-        .image-counter {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 2px 5px;
-            border-radius: 10px;
-        }
-    `;
-        document.head.appendChild(style);
     };
 
     const showLoadingModal = () => {
@@ -1130,7 +1054,6 @@
         ['dragstart', 'dragover', 'dragenter', 'dragleave', 'drop', 'dragend'].forEach(eventName => {
             imagePreview.addEventListener(eventName, handleImageContainerEvents);
         });
-
         // 全局錯誤處理
         window.addEventListener('error', (event) => {
             console.error('Uncaught error:', event.error);
@@ -1138,11 +1061,75 @@
         });
     };
 
-
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('fabAddPhoto').addEventListener('click', function () {
+            document.getElementById('imageInput').click();
+        });
         init();
         setupEventListeners();
+
     });
 
+    document.getElementById('downloadZip').addEventListener('click', async () => {
+        if (!state.selectedImages.length) {
+            alert('目前沒有可下載打包的照片！');
+            return;
+        }
+
+        // 顯示「照片打包中」modal
+        document.getElementById('zippingModal').style.display = 'block';
+
+        setTimeout(async () => {
+            try {
+                const zip = new JSZip();
+                const prefixInput = document.getElementById('zipPrefix');
+                const prefix = prefixInput ? prefixInput.value.trim() : '';
+                for (let i = 0; i < state.selectedImages.length; i++) {
+                    const img = state.selectedImages[i];
+                    const ext = img.name.split('.').pop();
+                    const newName = `${prefix}照片黏貼表-編號${i + 1}.${ext}`;
+                    const data = img.data.split(',')[1];
+                    zip.file(newName, data, { base64: true });
+                }
+                const content = await zip.generateAsync({ type: "blob" });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = `${prefix}照片打包下載.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } finally {
+                document.getElementById('zippingModal').style.display = 'none';
+            }
+        }, 0);
+    });
+
+    function updateDownloadZipButtonState() {
+        const btn = document.getElementById('downloadZip');
+        if (state.selectedImages.length > 0) {
+            btn.classList.remove('downzip-btn-disabled');
+            btn.classList.add('downzip-btn-enabled');
+        } else {
+            btn.classList.add('downzip-btn-disabled');
+            btn.classList.remove('downzip-btn-enabled');
+        }
+    }
+window.onbeforeunload = function (e) { /*離開網頁提醒*/ 
+    const hasInput =
+        document.getElementById('zipPrefix').value.trim() ||
+        document.getElementById('caseUni').value.trim() ||
+        document.getElementById('caseAddress').value.trim() ||
+        document.getElementById('caseDate').value.trim() ||
+        document.getElementById('caseNumber').value.trim() ||
+        (state.selectedImages && state.selectedImages.length > 0);
+
+    if (hasInput) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+
+};
 })(); // IIFE 結束
+

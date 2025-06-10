@@ -6,16 +6,18 @@
     <title>M-Picture</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' 
-    viewBox='0 0 100 100'><text x='50%' y='75%' dominant-baseline='middle' text-anchor='middle' 
-    font-size='90' fill='currentColor'>𖡼</text></svg>" type="image/svg+xml">
+        viewBox='0 0 95 95'><text x='50%' y='75%' dominant-baseline='middle' text-anchor='middle' 
+        font-size='90' fill='currentColor'>𖡼</text></svg>" type="image/svg+xml">
     <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0/build/index.js"></script> <!-- 建立Word .docx檔案模組 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script> <!-- 轉換HEIC to jpg模組 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script> <!-- 壓縮檔案模組 -->
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
+
 
 <body>
     <header>
@@ -28,30 +30,80 @@
                     <span class="label" data-value="right">交通違規</span>
                 </div>
             </div>
-
         </div>
-        <button id="generate" class="create-btn create-btn-disabled tooltip-bottom">
-            <i class="fas fa-download"></i>
-            <span class="tooltip-text">下載文件</span>
-        </button>
+        <div class="zip-controls">
+            <button id="downloadZip" class="downzip-btn downzip-btn-disabled tooltip-bottom">
+                <span class="material-symbols-outlined">deployed_code_update</span>
+                <span class="tooltip-text">打包照片</span>
+            </button>
+            <button id="generate" class="create-btn create-btn-disabled tooltip-bottom">
+                <span class="material-symbols-outlined">file_save</span>
+                <span class="tooltip-text">下載文件</span>
+            </button>
+        </div>
     </header>
+    <aside class="sidebar">
+        <div class="form-group">
+            <label for="zipPrefix">案 由</label>
+            <input type="text" id="zipPrefix" class="sidebar-input" placeholder="竊盜案">
+        </div>
+        <div class="form-group">
+            <label for="caseUni">單 位</label>
+            <input type="text" id="caseUni" class="sidebar-input" placeholder="中正派出所">
+        </div>
+        <div class="form-group">
+            <label for="caseAddress">攝影(違規)地址</label>
+            <input type="text" id="caseAddress" class="sidebar-input" placeholder="花蓮市中正路448號">
+        </div>
+        <div class="form-group">
+            <label for="caseDate">攝影(違規)日期</label>
+            <input type="text" id="caseDate" class="sidebar-input" placeholder="115/01/01">
+        </div>
+        <div class="form-group">
+            <label for="caseNumber">攝影人員</label>
+            <input type="text" id="caseNumber" class="sidebar-input" placeholder="李知恩">
+        </div>
 
-    <div class="container">
-        <div id="imagePreview">
-            <div class="empty-state">
-                <h4>🔍 點擊下方 " + " 按鈕開始新增照片。</h4>
-                <p>說明：新增照片後，可拖移照片編號變更順序。</p>
-                <p>⛔ 圖片僅支援JPG、PNG等格式，HEIC格式將轉檔後編輯。</p>
+    </aside>
+    <main class="main-content">
+        <div class="container">
+            <div id="imagePreview">
+                <div class="empty-state"><!-- 請同時修正JS內removeImage相同警語 -->
+                    <h4 style="color:#5d5d5d;">🔍 點擊左欄下方 " + " 按鈕開始新增照片。</h4>
+                    <p>新增照片後，可拖曳照片編號變更順序。</p>
+                    <p>輸入左邊相關資訊欄位後，即可下載Word文件(.docx)。</p>
+                    <h4 style="color:#5d5d5d;">⛔甩鍋聲明</h4>
+                    <p style="color:#ff7d7d;" >本網頁仍屬實驗開發階段，部分功能尚未完善，敬請見諒。</p>
+                    <p></p>
+                    <hr style="border: none; border-top: 2px dashed #b0b0b0;">
+                    <h4 style="color:#5d5d5d;">✒️ 照片黏貼表欄位需求</h4>
+                    <ul class="field-info-list">
+                        <li>刑事案件：案由、單位、地址、日期及攝影人員。</li>
+                        <li>交通事故：日期。</li>
+                        <li>交通違規：日期、地址及攝影人員。</li>
+                    </ul>
+                    <p>🚧交通違規：違規車號、法條、事實及單號等欄位尚未開發🚧</p>
+                    <hr style="border: none; border-top: 2px dashed #b0b0b0;">
+                    <h4 style="color:#5d5d5d;">📦 打包照片功能說明</h4>
+                    <p>點擊 "打包照片" 按鈕，照片將依編號重新命名打包成ZIP檔案。</p>
+                    <p>【 照片檔名格式："案由"照片黏貼表-編號? 】</code></p>
 
+
+                    <h4 style="color:#5d5d5d;">🧭 打包照片功能提醒</h4>
+                    <p >
+                        下載打包照片後，若 Windows " 內建解壓縮工具 " 顯示「檔案有風險」或「檔案損毀」
+                        <br>請右鍵點選壓縮檔，選取「內容」啟用「解除封鎖」 或 改用<a href="https://www.7-zip.org/" target="_blank">7-Zip</a>
+                        或 WinRAR 解壓縮。
+                    </p>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="add-photo-container">
-        <label for="imageInput" class="add-photo-btn">
-            <span class="plus-icon">+</span>
-        </label>
-        <input type="file" id="imageInput" multiple accept="image/*,.heic,.HEIC">
+    <div id="uploadingModal" class="modal">
+        <div class="modal-content">
+            <p>🚀 照片載入中，請稍候...</p>
+        </div>
     </div>
 
     <div id="loadingModal" class="modal">
@@ -59,19 +111,29 @@
             <p>🖨️ 照片黏貼中，請稍候...</p>
         </div>
     </div>
-
+    <div id="zippingModal" class="modal">
+        <div class="modal-content">
+            <p>📦 照片打包中，請稍候...</p>
+        </div>
+    </div>
     <div id="conversionModal" class="modal">
         <div class="modal-content">
-            <p>🍵 轉換.heic檔案，請稍候...</p>
+            <p>⚙️ 轉換.heic檔案中，請稍候...</p>
         </div>
     </div>
 
-    <div class="footer-container">
-        <p>提醒：照片不一定會貼成功，可能會突然沒有膠水...</p>
-        <p>🚧 Copyright© 2024 thehsiuhsiu. All rights reserved.🚧</p>
-    </div>
+    <button class="fab-add-photo" id="fabAddPhoto" title="新增照片">
+        <span class="material-symbols-outlined" style="font-size:60px;">add</span>
+    </button>
+    <input type="file" id="imageInput" multiple accept="image/*,.heic,.HEIC" style="display:none;">
 
     <script src="script.js"></script>
+
+    <footer>
+        <h3>🚧 Copyright© 2024 thehsiuhsiu. All rights reserved.🚧</h3>
+        <p>本網頁內容與ChatGPT、Claude、Gemini及GitHub Copilot共同協作開發。</p>
+    </footer>
+
 </body>
 
 </html>
