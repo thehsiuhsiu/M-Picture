@@ -95,6 +95,7 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+
 }
 
 .sidebar label {
@@ -247,6 +248,26 @@ h1 {
     transform: translateX(198px);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 .zip-controls {
     display: flex;
     align-items: center;
@@ -292,7 +313,7 @@ h1 {
     max-width: 200px;
     max-height: 200px;
     margin: 10px;
-    border: 2px solid #ddd;
+   
     border-radius: 15px;
     transition: transform 0.2s;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -500,7 +521,7 @@ h1 {
 .image-container img {
     max-width: 200px;
     max-height: 200px;
-    border: 2px solid #ddd;
+   
     border-radius: 20px;
     transition: transform 0.2s;
 }
@@ -586,7 +607,7 @@ h1 {
     background-color: #fefefe;
     margin: 15% auto;
     padding: 20px;
-    border: 1px solid #888;
+   
     width: 300px;
     text-align: center;
     border-radius: 5px;
@@ -690,4 +711,24 @@ footer {
     position: static;
 
 
+}
+
+#photoSizeSlider {
+    accent-color: #2e8fff; /* 簡單方式，支援新瀏覽器 */
+}
+/* 進階自訂 thumb 和 track 顏色 */
+#photoSizeSlider::-webkit-slider-thumb {
+    background: #1976d2;      /* 滑塊顏色 */
+    border: 2px solid #fff;
+     margin-top: -5px; /* 讓滑塊垂直置中，數值可依實際高度微調 */
+    border-radius: 50%;
+   
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+#photoSizeSlider::-webkit-slider-runnable-track {
+    background: #dceaff;      /* 軌道顏色 */
+    height: 6px;
+    border-radius: 3px;
 }

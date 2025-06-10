@@ -186,6 +186,13 @@
         img.alt = imageData.name;
         imageContainer.appendChild(img);
 
+        // 新增：讓新照片套用目前滑桿大小
+    const slider = document.getElementById('photoSizeSlider');
+    if (slider) {
+        img.style.maxWidth = slider.value + 'px';
+        img.style.maxHeight = slider.value + 'px';
+    }
+
         const counterElement = document.createElement('div');
         counterElement.className = 'image-counter';
         counterElement.textContent = counter;
@@ -291,9 +298,32 @@
             const emptyStateDiv = document.createElement('div');
             emptyStateDiv.className = 'empty-state';
             emptyStateDiv.innerHTML = `
-            <h4>🔍 點擊下方 " + " 按鈕開始新增照片。</h4>
-            <p>說明：新增照片後，可拖移照片編號變更順序。</p>
-            <p>⛔ 圖片僅支援JPG、PNG等格式，HEIC格式將轉檔後編輯。</p>`;
+           <h4 style="color:#5d5d5d;">🔍 點擊左欄下方 " + " 按鈕開始新增照片。</h4>
+                    <p>新增照片後，可拖曳照片編號變更順序。</p>
+                    <p>輸入左邊相關資訊欄位後，即可下載Word文件(.docx)。</p>
+                    <h4 style="color:#5d5d5d;">⛔甩鍋聲明</h4>
+                    <p style="color:#ff7d7d;" >本網頁仍屬實驗開發階段，部分功能尚未完善，敬請見諒。</p>
+                    <p></p>
+                    <hr style="border: none; border-top: 2px dashed #b0b0b0;">
+                    <h4 style="color:#5d5d5d;">✒️ 照片黏貼表欄位需求</h4>
+                    <ul class="field-info-list">
+                        <li>刑事案件：案由、單位、地址、日期及攝影人員。</li>
+                        <li>交通事故：日期。</li>
+                        <li>交通違規：日期、地址及攝影人員。</li>
+                    </ul>
+                    <p>🚧交通違規：違規車號、法條、事實及單號等欄位尚未開發🚧</p>
+                    <hr style="border: none; border-top: 2px dashed #b0b0b0;">
+                    <h4 style="color:#5d5d5d;">📦 打包照片功能說明</h4>
+                    <p>點擊 "打包照片" 按鈕，照片將依編號重新命名打包成ZIP檔案。</p>
+                    <p>【 照片檔名格式："案由"照片黏貼表-編號? 】</code></p>
+
+
+                    <h4 style="color:#5d5d5d;">🧭 打包照片功能提醒</h4>
+                    <p >
+                        下載打包照片後，若 Windows " 內建解壓縮工具 " 顯示「檔案有風險」或「檔案損毀」
+                        <br>請右鍵點選壓縮檔，選取「內容」啟用「解除封鎖」 或 改用<a href="https://www.7-zip.org/" target="_blank">7-Zip</a>
+                        或 WinRAR 解壓縮。
+                    </p>`;
             imagePreview.appendChild(emptyStateDiv);
             console.log("No images left, displaying empty state.");
         }
@@ -1070,6 +1100,17 @@
         setupEventListeners();
 
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const slider = document.getElementById('photoSizeSlider');
+    slider.addEventListener('input', function() {
+        const imgs = document.querySelectorAll('.image-container img');
+        imgs.forEach(img => {
+            img.style.maxWidth = slider.value + 'px';
+            img.style.maxHeight = slider.value + 'px';
+        });
+    });
+});
 
     document.getElementById('downloadZip').addEventListener('click', async () => {
         if (!state.selectedImages.length) {
