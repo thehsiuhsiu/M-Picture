@@ -83,7 +83,7 @@ h1 {
     margin-left: 15px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     min-height: calc(100vh - 190px);
     box-shadow: 0 3px 5px rgba(29, 29, 29, 0.2);
 }
@@ -96,7 +96,10 @@ h1 {
     flex-direction: column;
     align-items: flex-start;
 
+    
 }
+
+
 
 .sidebar label {
     font-size: 1rem;
@@ -104,9 +107,14 @@ h1 {
     padding-left: 4px;
     /* 新增這行，數值可依需求調整 */
     color: #7b7b7b;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 
 }
+
+
+
+
+
 
 .sidebar-input {
     width: 100%;
@@ -119,8 +127,6 @@ h1 {
     font-weight: bold;
     transition: border 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
-
-
     box-shadow: rgba(52, 52, 52, 0.2) 0px 2px 4px -2px inset,
         rgba(52, 52, 52, 0.2) 0px -2px 4px -2px inset;
 }
@@ -732,3 +738,72 @@ footer {
     height: 6px;
     border-radius: 3px;
 }
+
+.form-group-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1px;
+    /* 靠左，不要 justify-content: center; */
+}
+
+.sidebar-label {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #7b7b7b;
+    padding-left: 4px;
+    margin-bottom: 0;
+    line-height: 22px; /* 與 switch 高度一致 */
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 16px;
+    vertical-align: middle;
+     margin-top: 2px;
+}
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+#dateModeLabel {
+    font-size: 14px;
+    /* 調整字體大小 */
+ 
+    font-weight: bold;
+   color: #fda400;
+   margin-bottom: 6px;
+    /* 調整底部邊距 */;
+    line-height: 22px;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .3s;
+    border-radius: 22px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: #177fe6;
+}
+input:checked + .slider:before {
+    transform: translateX(18px);
+}
+

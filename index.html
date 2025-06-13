@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0/build/index.js"></script> <!-- 建立Word .docx檔案模組 -->
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script> <!-- 轉換HEIC to jpg模組 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script> <!-- 壓縮檔案模組 -->
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script> <!-- 讀取照片EXIF模組 -->
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -31,9 +32,9 @@
                 </div>
             </div>
         </div>
-               
+
         <div class="zip-controls">
-             
+
             <button id="downloadZip" class="downzip-btn downzip-btn-disabled tooltip-bottom">
                 <span class="material-symbols-outlined">deployed_code_update</span>
                 <span class="tooltip-text">打包照片</span>
@@ -51,23 +52,35 @@
         </div>
         <div class="form-group">
             <label for="caseUni">單 位</label>
-            <input type="text" id="caseUni" class="sidebar-input" placeholder="中正派出所">
+            <input type="text" id="caseUni" class="sidebar-input" placeholder="龜有公園前派出所">
+        </div><div class="form-group-row">
+            <label for="caseDate">攝影日期</label>     
+             <label class="switch" >
+                <input type="checkbox" id="dateModeSwitch" >
+                <span class="slider"></span>
+            </label>
+            <span id="dateModeLabel"></span>     
         </div>
+       
         <div class="form-group">
-            <label for="caseAddress">攝影(違規)地址</label>
-            <input type="text" id="caseAddress" class="sidebar-input" placeholder="花蓮市中正路448號">
+              <input type="text" id="caseDate" class="sidebar-input" placeholder="115/05/16 09:18">
         </div>
+      
         <div class="form-group">
-            <label for="caseDate">攝影(違規)日期</label>
-            <input type="text" id="caseDate" class="sidebar-input" placeholder="115/01/01">
+            <label for="caseAddress">攝影地址</label>
+            <input type="text" id="caseAddress" class="sidebar-input" placeholder="東京都葛飾區龜有3丁目32番17號">
         </div>
+        
+
+
         <div class="form-group">
             <label for="caseNumber">攝影人員</label>
-            <input type="text" id="caseNumber" class="sidebar-input" placeholder="李知恩">
+            <input type="text" id="caseNumber" class="sidebar-input" placeholder="毛利小五郎">
         </div>
         <div class="form-group">
-            <label for="photoSizeSlider" >預覽大小</label>
-            <input type="range" id="photoSizeSlider" min="120" max="600" value="250" step="1"  style="vertical-align:middle;; width:280px;" >
+            <label for="photoSizeSlider">預覽大小</label>
+            <input type="range" id="photoSizeSlider" min="120" max="600" value="250" step="1"
+                style="vertical-align:middle;; width:280px;">
         </div>
 
     </aside>
@@ -75,11 +88,14 @@
         <div class="container">
             <div id="imagePreview">
                 <div class="empty-state"><!-- 請同時修正JS內removeImage相同警語 -->
+                    
+                    <h4 style="color:#5d5d5d;">⛔甩鍋聲明</h4>
+                    <p style="font-weight: bold;">這是一個建立照片黏貼表的網頁。</p>
+                    <p style="color:#ff7d7d; font-weight: bold;">本網頁仍屬實驗甩鍋階段，不保證功能正常運作，敬請見諒。</p>
+                    <hr style="border: none; border-top: 2px dashed #b0b0b0;">
                     <h4 style="color:#5d5d5d;">🔍 點擊左欄下方 " + " 按鈕開始新增照片。</h4>
                     <p>新增照片後，可拖曳照片編號變更順序。</p>
                     <p>輸入左邊相關資訊欄位後，即可下載Word文件(.docx)。</p>
-                    <h4 style="color:#5d5d5d;">⛔甩鍋聲明</h4>
-                    <p style="color:#ff7d7d;" >本網頁仍屬實驗開發階段，部分功能尚未完善，敬請見諒。</p>
                     <p></p>
                     <hr style="border: none; border-top: 2px dashed #b0b0b0;">
                     <h4 style="color:#5d5d5d;">✒️ 照片黏貼表欄位需求</h4>
@@ -88,7 +104,9 @@
                         <li>交通事故：日期。</li>
                         <li>交通違規：日期、地址及攝影人員。</li>
                     </ul>
-                    <p>🚧交通違規：違規車號、法條、事實及單號等欄位尚未開發🚧</p>
+                    <p>交通違規：違規車號、法條、事實及單號等欄位尚未開發</p>
+                    <p style=" font-weight: bold;"> 實驗性功能【Auto-fill EXIF：自動導入EXIF中拍攝日期資訊】<br>
+                        (LINE下載之照片無此資訊)</p>
                     <hr style="border: none; border-top: 2px dashed #b0b0b0;">
                     <h4 style="color:#5d5d5d;">📦 打包照片功能說明</h4>
                     <p>點擊 "打包照片" 按鈕，照片將依編號重新命名打包成ZIP檔案。</p>
@@ -96,7 +114,7 @@
 
 
                     <h4 style="color:#5d5d5d;">🧭 打包照片功能提醒</h4>
-                    <p >
+                    <p>
                         下載打包照片後，若 Windows " 內建解壓縮工具 " 顯示「檔案有風險」或「檔案損毀」
                         <br>請右鍵點選壓縮檔，選取「內容」啟用「解除封鎖」 或 改用<a href="https://www.7-zip.org/" target="_blank">7-Zip</a>
                         或 WinRAR 解壓縮。
@@ -141,5 +159,5 @@
     </footer>
 
 </body>
-
+<audio id="bgMusic" controls style="display:none"></audio>
 </html>

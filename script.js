@@ -108,13 +108,20 @@
                 reader.onload = e => {
                     const img = new Image();
                     img.onload = () => {
-                        resolve({
-                            id: Date.now() + Math.random(),
-                            data: e.target.result,
-                            name: file.name,
-                            size: file.size,
-                            width: img.width,
-                            height: img.height
+                        // 讀取 EXIF 拍攝日期
+                        EXIF.getData(img, function () {
+                            let exifDate = EXIF.getTag(this, "DateTimeOriginal");
+                            // exifDate 例：2024:06:11 12:34:56
+                            let formattedDate = formatExifDate(exifDate); // 這行就夠了
+                            resolve({
+                                id: Date.now() + Math.random(),
+                                data: e.target.result,
+                                name: file.name,
+                                size: file.size,
+                                width: img.width,
+                                height: img.height,
+                                date: formattedDate // 這裡就會有時:分
+                            });
                         });
                     };
                     img.onerror = reject;
@@ -187,11 +194,11 @@
         imageContainer.appendChild(img);
 
         // 新增：讓新照片套用目前滑桿大小
-    const slider = document.getElementById('photoSizeSlider');
-    if (slider) {
-        img.style.maxWidth = slider.value + 'px';
-        img.style.maxHeight = slider.value + 'px';
-    }
+        const slider = document.getElementById('photoSizeSlider');
+        if (slider) {
+            img.style.maxWidth = slider.value + 'px';
+            img.style.maxHeight = slider.value + 'px';
+        }
 
         const counterElement = document.createElement('div');
         counterElement.className = 'image-counter';
@@ -297,12 +304,13 @@
             const imagePreview = document.getElementById('imagePreview');
             const emptyStateDiv = document.createElement('div');
             emptyStateDiv.className = 'empty-state';
-            emptyStateDiv.innerHTML = `
-           <h4 style="color:#5d5d5d;">🔍 點擊左欄下方 " + " 按鈕開始新增照片。</h4>
+            emptyStateDiv.innerHTML = `<h4 style="color:#5d5d5d;">⛔甩鍋聲明</h4>
+                    <p style="font-weight: bold;">這是一個建立照片黏貼表的網頁。</p>
+                    <p style="color:#ff7d7d; font-weight: bold;">本網頁仍屬實驗甩鍋階段，不保證功能正常運作，敬請見諒。</p>
+                    <hr style="border: none; border-top: 2px dashed #b0b0b0;">
+                    <h4 style="color:#5d5d5d;">🔍 點擊左欄下方 " + " 按鈕開始新增照片。</h4>
                     <p>新增照片後，可拖曳照片編號變更順序。</p>
                     <p>輸入左邊相關資訊欄位後，即可下載Word文件(.docx)。</p>
-                    <h4 style="color:#5d5d5d;">⛔甩鍋聲明</h4>
-                    <p style="color:#ff7d7d;" >本網頁仍屬實驗開發階段，部分功能尚未完善，敬請見諒。</p>
                     <p></p>
                     <hr style="border: none; border-top: 2px dashed #b0b0b0;">
                     <h4 style="color:#5d5d5d;">✒️ 照片黏貼表欄位需求</h4>
@@ -311,7 +319,9 @@
                         <li>交通事故：日期。</li>
                         <li>交通違規：日期、地址及攝影人員。</li>
                     </ul>
-                    <p>🚧交通違規：違規車號、法條、事實及單號等欄位尚未開發🚧</p>
+                    <p>交通違規：違規車號、法條、事實及單號等欄位尚未開發</p>
+                    <p style=" font-weight: bold;"> 實驗性功能【Auto-fill EXIF：自動導入EXIF中拍攝日期資訊】<br>
+                        (LINE下載之照片無此資訊)</p>
                     <hr style="border: none; border-top: 2px dashed #b0b0b0;">
                     <h4 style="color:#5d5d5d;">📦 打包照片功能說明</h4>
                     <p>點擊 "打包照片" 按鈕，照片將依編號重新命名打包成ZIP檔案。</p>
@@ -319,7 +329,7 @@
 
 
                     <h4 style="color:#5d5d5d;">🧭 打包照片功能提醒</h4>
-                    <p >
+                    <p>
                         下載打包照片後，若 Windows " 內建解壓縮工具 " 顯示「檔案有風險」或「檔案損毀」
                         <br>請右鍵點選壓縮檔，選取「內容」啟用「解除封鎖」 或 改用<a href="https://www.7-zip.org/" target="_blank">7-Zip</a>
                         或 WinRAR 解壓縮。
@@ -415,8 +425,31 @@
         }, 0);
     };
 
+document.addEventListener('DOMContentLoaded', function () {
+    const musicMap = {
+        left: 'music1.mp3',    // 刑事案件
+        middle: 'music2.mp3',  // 交通事故
+        right: 'music3.mp3'    // 交通違規
+    };
+    const audio = document.getElementById('bgMusic');
+     audio.volume = 0.7; // 0~1，這裡是 70% 音量
+    document.querySelectorAll('.label').forEach(label => {
+        label.addEventListener('click', function () {
+            const key = this.getAttribute('data-value');
+            if (musicMap[key]) {
+                audio.src = musicMap[key];
+                audio.play();
+            }
+        });
+    });
+});
+
+
+
     // 主要的文檔創建函數
     const createDocument = (docx, format, formData) => {
+        const isAutoDate = document.getElementById('dateModeSwitch').checked;
+        const manualDate = document.getElementById('caseDate').value;
         let title, createContent;
         switch (format) {
             case 'left':
@@ -467,7 +500,7 @@
                     ],
                 }),
             },
-            children: createContent(docx, state.selectedImages, formData),
+            children: createContent(docx, state.selectedImages, formData, isAutoDate, manualDate),
         }];
 
         // 只為非交通違規文件添加頁腳
@@ -491,18 +524,18 @@
 
     //====================================刑事案件=========================================================================================
     // 刑案照片內容（保持原有格式）
-    const createCriminalContent = (docx, images, formData) => {
-        return createImageTables(docx, images, formData);
+    const createCriminalContent = (docx, images, formData, isAutoDate, manualDate) => {
+        return createImageTables(docx, images, formData, isAutoDate, manualDate);
     };
 
     //刑案照片內容 
-    const createImageTables = (docx, images, formData) => {
+    const createImageTables = (docx, images, formData, isAutoDate, manualDate) => {
         const tables = [];
         for (let i = 0; i < images.length; i += 2) {
             tables.push(createHeaderTable(docx, formData));
-            tables.push(...createImageTable(docx, images[i], i + 1, formData));
+            tables.push(...createImageTable(docx, images[i], i + 1, formData, isAutoDate, manualDate));
             if (i + 1 < images.length) {
-                tables.push(...createImageTable(docx, images[i + 1], i + 2, formData));
+                tables.push(...createImageTable(docx, images[i + 1], i + 2, formData, isAutoDate, manualDate));
             }
             if (i + 2 < images.length) {
                 tables.push(new docx.Paragraph({
@@ -556,8 +589,8 @@
     };
 
     //刑案照片內容
-    const createImageTable = (docx, image, index, formData) => {
-
+    const createImageTable = (docx, image, index, formData, isAutoDate, manualDate) => {
+        const dateToShow = isAutoDate ? (image.date || "") : manualDate;
         const imageRatio = image.width / image.height;
         let imageHeight = 350;  // 固定高度為350
         let imageWidth = imageHeight * imageRatio; //寬度=高度*比例
@@ -612,7 +645,7 @@
                                 width: { size: 15, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
-                                children: [new docx.Paragraph({ text: formData.caseDate || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
+                                children: [new docx.Paragraph({ text: dateToShow, style: "Normal", alignment: docx.AlignmentType.LEFT })],
                                 width: { size: 35, type: docx.WidthType.PERCENTAGE },
                                 columnSpan: 2,
                             }),
@@ -664,11 +697,11 @@
     //====================================交通事故=========================================================================================
 
     // 交通事故照片內容
-    const createTrafficAccidentContent = (docx, images, formData) => {
+    const createTrafficAccidentContent = (docx, images, formData, isAutoDate, manualDate) => {
         const tables = [];
         for (let i = 0; i < images.length; i++) {
             // 添加圖片表格
-            tables.push(createTrafficAccidentImageTable(docx, images[i], i + 1, formData));
+            tables.push(createTrafficAccidentImageTable(docx, images[i], i + 1, formData, isAutoDate, manualDate));
 
             // 在每個表格後添加一個空白段落，除非是最後一個表格
             if (i < images.length - 1) {
@@ -684,7 +717,8 @@
     };
 
     // 交通事故圖片表格
-    const createTrafficAccidentImageTable = (docx, image, index, formData) => {
+    const createTrafficAccidentImageTable = (docx, image, index, formData, isAutoDate, manualDate) => {
+        const dateToShow = isAutoDate ? (image.date || "") : manualDate;
         const imageRatio = image.width / image.height;
         let imageHeight = 350;  // 固定高度為350
         let imageWidth = imageHeight * imageRatio; //寬度=高度*比例
@@ -733,7 +767,7 @@
                             width: { size: 15, type: docx.WidthType.PERCENTAGE },
                         }),
                         new docx.TableCell({
-                            children: [new docx.Paragraph({ text: formData.caseDate || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
+                            children: [new docx.Paragraph({ text: dateToShow, alignment: docx.AlignmentType.LEFT })],
                             width: { size: 55, type: docx.WidthType.PERCENTAGE },
                             columnSpan: 2,
                         }),
@@ -772,19 +806,19 @@
     //====================================交通違規=========================================================================================
 
     // 交通違規照片內容
-    const createTrafficViolationContent = (docx, images, formData) => {
+    const createTrafficViolationContent = (docx, images, formData, isAutoDate, manualDate) => {
         const tables = [];
         for (let i = 0; i < images.length; i += 2) {
             // 添加圖片表格
             tables.push(createTrafficViolationHeaderTable(docx));
-            tables.push(...createTrafficViolationImageTable(docx, images[i], i + 1, formData));
+            tables.push(...createTrafficViolationImageTable(docx, images[i], i + 1, formData, isAutoDate, manualDate));
 
             /*// 在每個表格後添加一個空白段落，除非是最後一個表格
             if (i < images.length - 1) {
                 tables.push(new docx.Paragraph({ text: "", style: "Normal" }));
             }*/
             if (i + 1 < images.length) {
-                tables.push(...createTrafficViolationImageTable(docx, images[i + 1], i + 2, formData));
+                tables.push(...createTrafficViolationImageTable(docx, images[i + 1], i + 2, formData, isAutoDate, manualDate));
             }
 
             // 每兩張圖片後添加一個分頁符，除非是最後一組
@@ -841,7 +875,8 @@
     };
 
     // 交通違規圖片表格
-    const createTrafficViolationImageTable = (docx, image, index, formData) => {
+    const createTrafficViolationImageTable = (docx, image, index, formData, isAutoDate, manualDate) => {
+        const dateToShow = isAutoDate ? (image.date || "") : manualDate;
         const imageRatio = image.width / image.height;
         let imageHeight = 350;  // 固定高度為350
         let imageWidth = imageHeight * imageRatio; //寬度=高度*比例
@@ -892,7 +927,7 @@
                                 width: { size: 15, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
-                                children: [new docx.Paragraph({ text: formData.caseDate || "", style: "Normal", alignment: docx.AlignmentType.LEFT })],
+                                children: [new docx.Paragraph({ text: dateToShow, alignment: docx.AlignmentType.LEFT })],
                                 width: { size: 35, type: docx.WidthType.PERCENTAGE },
                             }),
                             new docx.TableCell({
@@ -1101,16 +1136,57 @@
 
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-    const slider = document.getElementById('photoSizeSlider');
-    slider.addEventListener('input', function() {
-        const imgs = document.querySelectorAll('.image-container img');
-        imgs.forEach(img => {
-            img.style.maxWidth = slider.value + 'px';
-            img.style.maxHeight = slider.value + 'px';
+    document.addEventListener('DOMContentLoaded', function () {
+        const slider = document.getElementById('photoSizeSlider');
+        slider.addEventListener('input', function () {
+            const imgs = document.querySelectorAll('.image-container img');
+            imgs.forEach(img => {
+                img.style.maxWidth = slider.value + 'px';
+                img.style.maxHeight = slider.value + 'px';
+            });
         });
     });
-});
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateSwitch = document.getElementById('dateModeSwitch');
+        const dateInput = document.getElementById('caseDate');
+        const dateModeLabel = document.getElementById('dateModeLabel');
+
+        function setDateInputMode() {
+            if (dateSwitch.checked) {
+                dateInput.disabled = true;
+                dateModeLabel.textContent = 'Auto-fill EXIF';
+                // 這裡可以自動帶入第一張照片的 EXIF 日期
+                if (window.firstExifDate) {
+                    dateInput.value = window.firstExifDate;
+                } else {
+                    dateInput.value = '';
+                }
+            } else {
+                dateInput.disabled = false;
+               dateModeLabel.textContent = '';
+            }
+        }
+
+        dateSwitch.addEventListener('change', setDateInputMode);
+
+        setDateInputMode();
+    });
+
+    function formatExifDate(exifDate) {
+        // exifDate 例：2024:06:11 14:23:45
+        if (!exifDate) return '';
+        const [datePart, timePart] = exifDate.split(' ');
+        if (!datePart || !timePart) return '';
+        const [y, m, d] = datePart.split(':');
+        const year = parseInt(y, 10) - 1911;
+        const [hh, mm] = timePart.split(':');
+        return `${year}/${m}/${d} ${hh}:${mm}`;
+    }
+
+
+
 
     document.getElementById('downloadZip').addEventListener('click', async () => {
         if (!state.selectedImages.length) {
@@ -1156,21 +1232,21 @@
             btn.classList.remove('downzip-btn-enabled');
         }
     }
-window.onbeforeunload = function (e) { /*離開網頁提醒*/ 
-    const hasInput =
-        document.getElementById('zipPrefix').value.trim() ||
-        document.getElementById('caseUni').value.trim() ||
-        document.getElementById('caseAddress').value.trim() ||
-        document.getElementById('caseDate').value.trim() ||
-        document.getElementById('caseNumber').value.trim() ||
-        (state.selectedImages && state.selectedImages.length > 0);
+    window.onbeforeunload = function (e) { /*離開網頁提醒*/
+        const hasInput =
+            document.getElementById('zipPrefix').value.trim() ||
+            document.getElementById('caseUni').value.trim() ||
+            document.getElementById('caseAddress').value.trim() ||
+            document.getElementById('caseDate').value.trim() ||
+            document.getElementById('caseNumber').value.trim() ||
+            (state.selectedImages && state.selectedImages.length > 0);
 
-    if (hasInput) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-    }
+        if (hasInput) {
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
+        }
 
-};
+    };
 })(); // IIFE 結束
 
